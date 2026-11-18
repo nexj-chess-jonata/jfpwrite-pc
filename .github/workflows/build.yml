@@ -1,0 +1,31 @@
+name: Gerar instalador
+
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: JFPWrite-0.5/jfpwrite
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Instalar dependencias
+        run: npm install
+
+      - name: Gerar instalador do Windows
+        run: npx electron-builder --win nsis --publish never
+
+      - name: Publicar instalador
+        uses: actions/upload-artifact@v4
+        with:
+          name: JFPWrite-Instalador
+          path: JFPWrite-0.5/jfpwrite/dist/*.exe
