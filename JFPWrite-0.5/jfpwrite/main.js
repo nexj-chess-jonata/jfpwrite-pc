@@ -181,47 +181,47 @@ ipcMain.on('close-now', () => {
   if (win) win.close();
 });
 
-// ---- Dicionário de português (carrega em segundo plano; o texto nunca sai do computador) ----
-let speller = null;
+// ---- Dicionário de português (roda num processo separado; a janela nunca trava; o texto nunca sai do computador) ----
+const { Worker } = require('worker_threads');
+let spellWorker = null;
 let spellState = 'loading';
+let spellSeq = 0;
+const spellPending = new Map();
 
-function loadSpeller() {
-  setTimeout(() => {
-    try {
-      const nspell = require('nspell');
-      const dir = path.join(__dirname, 'node_modules', 'dictionary-pt-br');
-      const aff = fs.readFileSync(path.join(dir, 'index.aff'));
-      const dic = fs.readFileSync(path.join(dir, 'index.dic'));
-      speller = nspell(aff, dic);
-      spellState = 'ready';
-    } catch (e) {
-      speller = null;
-      spellState = 'none';
-    }
-  }, 300);
+function failPending() {
+  for (const resolve of spellPending.values()) resolve([]);
+  spellPending.clear();
 }
 
-function wordOk(word) {
-  if (speller.correct(word)) return true;
-  if (word.indexOf('-') > 0) {
-    return word.split('-').every((part) => part.length < 2 || speller.correct(part));
+function loadSpeller() {
+  try {
+    spellWorker = new Worker(path.join(__dirname, 'app', 'spell-worker.js'));
+    spellWorker.on('message', (msg) => {
+      if (!msg) return;
+      if (msg.type === 'ready') spellState = 'ready';
+      else if (msg.type === 'failed') spellState = 'none';
+      else if (msg.type === 'result') {
+        const resolve = spellPending.get(msg.id);
+        if (resolve) { spellPending.delete(msg.id); resolve(msg.wrong || []); }
+      }
+    });
+    spellWorker.on('error', () => { spellState = 'none'; spellWorker = null; failPending(); });
+    spellWorker.on('exit', () => { if (spellState !== 'ready') spellState = 'none'; spellWorker = null; failPending(); });
+  } catch (e) {
+    spellWorker = null;
+    spellState = 'none';
   }
-  return false;
 }
 
 ipcMain.handle('spell-status', () => spellState);
 
 ipcMain.handle('spell-check', (event, words) => {
-  if (!speller || !Array.isArray(words)) return [];
-  const wrong = [];
-  for (const raw of words.slice(0, 400)) {
-    const word = String(raw);
-    if (wordOk(word)) continue;
-    let suggestions = [];
-    try { suggestions = speller.suggest(word).slice(0, 5); } catch (e) { suggestions = []; }
-    wrong.push({ w: word, s: suggestions });
-  }
-  return wrong;
+  if (!spellWorker || spellState !== 'ready' || !Array.isArray(words)) return [];
+  return new Promise((resolve) => {
+    const id = ++spellSeq;
+    spellPending.set(id, resolve);
+    spellWorker.postMessage({ type: 'check', id, words: words.slice(0, 400).map(String) });
+  });
 });
 
 app.whenReady().then(() => {
