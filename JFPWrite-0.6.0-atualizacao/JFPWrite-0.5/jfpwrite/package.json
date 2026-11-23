@@ -1,0 +1,48 @@
+{
+  "name": "jfpwrite",
+  "version": "0.6.0",
+  "description": "JFPWrite - editor de texto em português",
+  "author": "JFP",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder --win nsis --publish never"
+  },
+  "devDependencies": {
+    "electron": "^33.2.0",
+    "electron-builder": "^25.1.8"
+  },
+  "build": {
+    "appId": "br.com.jfp.jfpwrite",
+    "productName": "JFPWrite",
+    "files": [
+      "main.js",
+      "preload.js",
+      "app/**/*"
+    ],
+    "directories": {
+      "buildResources": "build"
+    },
+    "win": {
+      "target": "nsis",
+      "icon": "build/icon.png"
+    },
+    "nsis": {
+      "oneClick": true,
+      "createDesktopShortcut": true,
+      "shortcutName": "JFPWrite",
+      "artifactName": "JFPWrite-Instalador-${version}.exe"
+    },
+    "fileAssociations": [
+      {
+        "ext": "jfpw",
+        "name": "Documento JFPWrite",
+        "description": "Documento JFPWrite"
+      }
+    ]
+  },
+  "dependencies": {
+    "nspell": "^2.1.5",
+    "dictionary-pt-br": "*"
+  }
+}
