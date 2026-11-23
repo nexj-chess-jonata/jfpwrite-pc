@@ -6,6 +6,12 @@ let win = null;
 let dirty = false;
 let forceClose = false;
 
+const SAVE_FILTERS = [
+  { name: 'Documento JFPWrite (*.jfpw)', extensions: ['jfpw'] },
+  { name: 'Documento do Word (*.docx)', extensions: ['docx'] },
+  { name: 'PDF (*.pdf)', extensions: ['pdf'] }
+];
+
 const FILTERS = [
   { name: 'Documento JFPWrite', extensions: ['jfpw'] },
   { name: 'Texto ou página', extensions: ['txt', 'html', 'htm'] }
@@ -109,6 +115,27 @@ ipcMain.handle('save', async (event, data) => {
   }
 });
 
+ipcMain.handle('pick-save-path', async (event, d) => {
+  const result = await dialog.showSaveDialog(win, {
+    defaultPath: ((d && d.suggestedName) || 'Documento') + '.jfpw',
+    filters: SAVE_FILTERS
+  });
+  if (result.canceled || !result.filePath) return null;
+  let target = result.filePath;
+  if (!/\.(jfpw|docx|pdf)$/i.test(target)) target += '.jfpw';
+  return target;
+});
+
+ipcMain.handle('write-file', async (event, d) => {
+  try {
+    fs.writeFileSync(d.path, Buffer.from(d.data));
+    return d.path;
+  } catch (e) {
+    dialog.showErrorBox('JFPWrite', 'Não foi possível salvar o arquivo.');
+    return null;
+  }
+});
+
 ipcMain.handle('export-file', async (event, d) => {
   const ext = String(d.ext || 'bin').replace(/[^a-z0-9]/gi, '');
   const result = await dialog.showSaveDialog(win, {
@@ -132,11 +159,15 @@ function esc(text) {
 }
 
 ipcMain.handle('print-pdf', async (event, d) => {
-  const result = await dialog.showSaveDialog(win, {
-    defaultPath: (d.suggestedName || 'Documento') + '.pdf',
-    filters: [{ name: 'PDF', extensions: ['pdf'] }]
-  });
-  if (result.canceled || !result.filePath) return false;
+  let pdfPath = d.path || null;
+  if (!pdfPath) {
+    const result = await dialog.showSaveDialog(win, {
+      defaultPath: (d.suggestedName || 'Documento') + '.pdf',
+      filters: [{ name: 'PDF', extensions: ['pdf'] }]
+    });
+    if (result.canceled || !result.filePath) return false;
+    pdfPath = result.filePath;
+  }
   const base = 'font-family:Georgia,serif;font-size:9px;color:#555;width:100%;box-sizing:border-box;';
   const sideL = Number(d.ml) || 2.5;
   const sideR = Number(d.mr) || 2.5;
@@ -160,8 +191,8 @@ ipcMain.handle('print-pdf', async (event, d) => {
   }
   try {
     const pdf = await win.webContents.printToPDF(options);
-    fs.writeFileSync(result.filePath, pdf);
-    return result.filePath;
+    fs.writeFileSync(pdfPath, pdf);
+    return pdfPath;
   } catch (e) {
     dialog.showErrorBox('JFPWrite', 'Não foi possível gerar o PDF.');
     return false;

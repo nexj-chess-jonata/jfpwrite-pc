@@ -221,18 +221,48 @@
     setTimeout(function () { URL.revokeObjectURL(link.href); }, 1000);
   }
 
+  function saveJfpw(path, content) {
+    return desktop.save({ path: path, content: content }).then(function (saved) {
+      if (!saved) return false;
+      filePath = saved;
+      fileName = baseName(saved);
+      clearDraft();
+      setDirty(false);
+      return true;
+    });
+  }
+
+  /** Word e PDF são cópias para enviar ou imprimir: o documento continua aberto e ainda não salvo como JFPWrite. */
+  function saveCopy(kind, path) {
+    var job;
+    if (kind === 'docx') {
+      job = window.JFPExport.currentDocx().then(function (bytes) { return desktop.writeFile({ path: path, data: bytes }); });
+    } else {
+      job = window.JFPPage.print(path);
+    }
+    return job.then(function (saved) {
+      if (saved) {
+        tell('Cópia ' + (kind === 'docx' ? 'em Word' : 'em PDF') + ' salva em:\n' + saved +
+          '\n\nO documento continua aberto aqui. Para poder editá-lo depois no JFPWrite, use também Salvar como e escolha "Documento JFPWrite (*.jfpw)".');
+      }
+      return false;
+    }).catch(function () {
+      tell('Não foi possível gerar a cópia em ' + (kind === 'docx' ? 'Word' : 'PDF') + '.');
+      return false;
+    });
+  }
+
   function save(forceNewName) {
     var content = serialize();
     if (desktop) {
       var suggested = (fileName || 'Documento').replace(/\.[^.]+$/, '');
-      var target = forceNewName || !/\.jfpw$/i.test(filePath || '') ? null : filePath;
-      return desktop.save({ path: target, content: content, suggestedName: suggested }).then(function (saved) {
-        if (!saved) return false;
-        filePath = saved;
-        fileName = baseName(saved);
-        clearDraft();
-        setDirty(false);
-        return true;
+      var existing = !forceNewName && /\.jfpw$/i.test(filePath || '') ? filePath : null;
+      if (existing) return saveJfpw(existing, content);
+      return desktop.pickSavePath({ suggestedName: suggested }).then(function (chosen) {
+        if (!chosen) return false;
+        if (/\.docx$/i.test(chosen)) return saveCopy('docx', chosen);
+        if (/\.pdf$/i.test(chosen)) return saveCopy('pdf', chosen);
+        return saveJfpw(chosen, content);
       });
     }
     var name = (fileName || 'Documento').replace(/\.[^.]+$/, '') + '.jfpw';

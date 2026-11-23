@@ -9,6 +9,8 @@ contextBridge.exposeInMainWorld('jfpDesktop', {
   printPdf: (data) => ipcRenderer.invoke('print-pdf', data),
   spellStatus: () => ipcRenderer.invoke('spell-status'),
   spellCheck: (words) => ipcRenderer.invoke('spell-check', words),
+  pickSavePath: (data) => ipcRenderer.invoke('pick-save-path', data),
+  writeFile: (data) => ipcRenderer.invoke('write-file', data),
   exportFile: (data) => ipcRenderer.invoke('export-file', data),
   closeNow: () => ipcRenderer.send('close-now'),
   onSaveAndClose: (callback) => ipcRenderer.on('save-and-close', () => callback())

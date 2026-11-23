@@ -52,3 +52,7 @@ Editor de texto em português para PC (Windows). Versão 0.1 — Fase 1 de 6.
 - EPUB 3 com sumário; cada título 1 vira um capítulo.
 - Tudo feito dentro do aplicativo, sem bibliotecas externas e sem internet. Arquivo: app/export.js.
 - Ainda falta (Fase 5b): a versão para celular (APK).
+
+## 0.6.0
+- "Salvar como" agora oferece três tipos: Documento JFPWrite (.jfpw), Documento do Word (.docx) e PDF (.pdf).
+- Word e PDF são cópias: o documento continua aberto e ainda precisa ser salvo como .jfpw para poder ser editado depois.

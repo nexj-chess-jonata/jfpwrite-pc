@@ -894,5 +894,13 @@
     if (button && button.getAttribute('data-act') === 'export') $('dlg-export').showModal();
   });
 
-  window.JFPExport = { toDocx: toDocx, toEpub: toEpub, toMarkdown: toMarkdown, parseBody: parseBody, zip: zip };
+  /** Gera o Word (.docx) do documento aberto, para o "Salvar como". */
+  function currentDocx() {
+    var body = currentBody();
+    var page = window.JFPPage ? window.JFPPage.get() : { size: 'A4', landscape: false, mt: 2.5, mb: 2.5, ml: 2.5, mr: 2.5, lh: 1.5, header: '', footer: '', numbering: 'none' };
+    var title = docTitle() || firstHeading(body) || 'Documento';
+    return toDocx(body, page, title);
+  }
+
+  window.JFPExport = { currentDocx: currentDocx, toDocx: toDocx, toEpub: toEpub, toMarkdown: toMarkdown, parseBody: parseBody, zip: zip };
 })();

@@ -297,11 +297,12 @@
   // Imprimir / salvar em PDF
   // ------------------------------------------------------------------
 
-  function printDocument() {
+  function printDocument(targetPath) {
     markCurrentOff();
     if (desktop && desktop.printPdf) {
       var d = dims();
-      desktop.printPdf({
+      return desktop.printPdf({
+        path: typeof targetPath === 'string' ? targetPath : null,
         width: d.w, height: d.h,
         mt: page.mt, mb: page.mb, ml: page.ml, mr: page.mr,
         header: page.header, footer: page.footer, numbering: page.numbering,
@@ -309,6 +310,7 @@
       });
     } else {
       window.print();
+      return Promise.resolve(false);
     }
   }
 
