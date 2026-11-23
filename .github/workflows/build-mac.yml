@@ -1,0 +1,33 @@
+name: Gerar instalador Mac
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main, master ]
+
+jobs:
+  build:
+    runs-on: macos-latest
+    defaults:
+      run:
+        working-directory: JFPWrite-0.5/jfpwrite
+    env:
+      CSC_IDENTITY_AUTO_DISCOVERY: "false"
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Instalar dependencias
+        run: npm install
+
+      - name: Gerar instalador do Mac
+        run: npx electron-builder --mac dmg --x64 --arm64 --publish never
+
+      - name: Publicar instalador
+        uses: actions/upload-artifact@v4
+        with:
+          name: JFPWrite-Instalador-Mac
+          path: JFPWrite-0.5/jfpwrite/dist/*.dmg
