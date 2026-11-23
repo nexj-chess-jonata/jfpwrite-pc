@@ -40,7 +40,16 @@ function createWindow() {
       nodeIntegration: false
     }
   });
-  Menu.setApplicationMenu(null);
+  if (process.platform === 'darwin') {
+    // No Mac, sem este menu os atalhos de copiar, colar, desfazer e sair não funcionam.
+    Menu.setApplicationMenu(Menu.buildFromTemplate([
+      { label: 'JFPWrite', submenu: [{ role: 'about', label: 'Sobre o JFPWrite' }, { type: 'separator' }, { role: 'hide', label: 'Ocultar JFPWrite' }, { role: 'hideOthers', label: 'Ocultar outros' }, { role: 'unhide', label: 'Mostrar tudo' }, { type: 'separator' }, { role: 'quit', label: 'Sair do JFPWrite' }] },
+      { label: 'Editar', submenu: [{ role: 'undo', label: 'Desfazer' }, { role: 'redo', label: 'Refazer' }, { type: 'separator' }, { role: 'cut', label: 'Recortar' }, { role: 'copy', label: 'Copiar' }, { role: 'paste', label: 'Colar' }, { role: 'selectAll', label: 'Selecionar tudo' }] },
+      { label: 'Janela', submenu: [{ role: 'minimize', label: 'Minimizar' }, { role: 'zoom', label: 'Ampliar' }] }
+    ]));
+  } else {
+    Menu.setApplicationMenu(null);
+  }
   win.loadFile(path.join(__dirname, 'app', 'index.html'));
 
   // Links abrem no navegador, nunca dentro do editor.

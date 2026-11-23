@@ -6,7 +6,8 @@
   "main": "main.js",
   "scripts": {
     "start": "electron .",
-    "dist": "electron-builder --win nsis --publish never"
+    "dist": "electron-builder --win nsis --publish never",
+    "dist:mac": "electron-builder --mac dmg --publish never"
   },
   "devDependencies": {
     "electron": "^33.2.0",
@@ -39,7 +40,15 @@
         "name": "Documento JFPWrite",
         "description": "Documento JFPWrite"
       }
-    ]
+    ],
+    "mac": {
+      "target": "dmg",
+      "icon": "build/icon.png",
+      "category": "public.app-category.productivity"
+    },
+    "dmg": {
+      "artifactName": "JFPWrite-Mac-${arch}-${version}.dmg"
+    }
   },
   "dependencies": {
     "nspell": "^2.1.5",
